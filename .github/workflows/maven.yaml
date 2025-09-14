@@ -3,7 +3,7 @@ name: Maven Package
 on:
   pull_request:
     branches:
-      - main  # Укажите вашу основную ветку
+      - main  
 
 jobs:
   build:
