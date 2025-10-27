@@ -42,7 +42,8 @@ public class Validator {
 
       if (field.isAnnotationPresent(Size.class)) {
         Size annotation = field.getAnnotation(Size.class);
-        if (value instanceof String str) {
+        if (value instanceof String) {
+          String str = (String) value;
           if (str.length() < annotation.min() || str.length() > annotation.max()) {
             result.addError(annotation.message());
           }
@@ -51,7 +52,8 @@ public class Validator {
 
       if (field.isAnnotationPresent(Range.class)) {
         Range annotation = field.getAnnotation(Range.class);
-        if (value instanceof Number number) {
+        if (value instanceof Number) {
+          Number number = (Number) value;
           long longValue = number.longValue();
           if (longValue < annotation.min() || longValue > annotation.max()) {
             result.addError(annotation.message());
@@ -60,7 +62,8 @@ public class Validator {
       }
       if (field.isAnnotationPresent(Email.class)) {
         Email annotation = field.getAnnotation(Email.class);
-        if (value instanceof String email) {
+        if (value instanceof String) {
+          String email = (String) value;
           if (!emailPattern.matcher(email).matches()) {
             result.addError(annotation.message());
           }
