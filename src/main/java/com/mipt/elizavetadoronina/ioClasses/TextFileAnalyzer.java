@@ -1,8 +1,6 @@
 package com.mipt.elizavetadoronina.ioClasses;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,11 +12,11 @@ public class TextFileAnalyzer {
     private final long charCount;
     private final Map<Character, Long> charFrequency;
 
-    public AnalysisResult(long lineCount, long wordCount, long charCount, Map<Character, Long> charFrequency, long lineCount1, long wordCount1, long charCount1, Map<Character, Long> charFrequency1) {
-      this.lineCount = lineCount1;
-      this.wordCount = wordCount1;
-      this.charCount = charCount1;
-      this.charFrequency = charFrequency1;
+    public AnalysisResult(long lineCount, long wordCount, long charCount, Map<Character, Long> charFrequency) {
+      this.lineCount = lineCount;
+      this.wordCount = wordCount;
+      this.charCount = charCount;
+      this.charFrequency = charFrequency;
     }
 
     public long getLineCount() {
@@ -49,8 +47,61 @@ public class TextFileAnalyzer {
       while ((line = reader.readLine()) != null) {
         lineCount++;
 
-        String[] words = line.trim().split()
+        String trimmedLine = line.trim();
+        if (!trimmedLine.isEmpty()) {
+          String[] words = trimmedLine.split("\\s+");
+          wordCount += words.length;
+        }
+
+        for (char c : line.toCharArray()) {
+          charCount++;
+          charFrequency.put(c, charFrequency.getOrDefault(c, 0L) + 1);
+        }
+
+        if (reader.ready()) {
+          charCount++;
+          charFrequency.put('\n', charFrequency.getOrDefault('\n', 0L) + 1);
+        }
       }
+
+      if (charCount > 0) {
+        charCount--;
+        charFrequency.put('\n', charFrequency.get('\n') - 1);
+        if (charFrequency.get('\n') == 0) {
+          charFrequency.remove('\n');
+        }
+      }
+    }
+    return new AnalysisResult(lineCount, wordCount, charCount, charFrequency);
+  }
+
+  public void saveAnalysisResult(AnalysisResult result, String outputPath) throws IOException {
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
+      writer.write("Line count: " + result.getLineCount());
+      writer.newLine();
+      writer.write("Word count: " + result.getWordCount());
+      writer.newLine();
+      writer.write("Character count: " + result.getCharCount());
+      writer.newLine();
+      writer.write("Character Frequency:");
+      writer.newLine();
+
+      for (Map.Entry<Character, Long> entry : result.getCharFrequency().entrySet()) {
+        char character = entry.getKey();
+        String charRepresentation = getCharRepresentation(character);
+        writer.write("'" + charRepresentation + "': " + entry.getValue());
+        writer.newLine();
+      }
+    }
+  }
+
+  private String getCharRepresentation(char c) {
+    switch (c) {
+      case '\n': return "\\n";
+      case '\r': return "\\r";
+      case '\t': return "\\t";
+      case ' ': return "space";
+      default: return String.valueOf(c);
     }
   }
 }
