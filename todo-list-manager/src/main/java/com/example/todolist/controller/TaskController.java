@@ -59,4 +59,9 @@ public class TaskController {
   public String getRepositoryStats() {
     return statisticsService.getRepositoryInfo();
   }
+
+  @GetMapping("/cache/size")
+  public String getCacheSize() {
+    return String.format("Размер кэша задач: %d", taskService.getCacheSize());
+  }
 }

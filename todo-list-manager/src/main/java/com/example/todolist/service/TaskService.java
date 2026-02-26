@@ -1,6 +1,6 @@
 package com.example.todolist.service;
 
-import com.example.todolist.model.Task;
+import com.example.todolist.task.Task;
 import com.example.todolist.repository.TaskRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
