@@ -1,6 +1,6 @@
 package com.example.todolist.service;
 
-import com.example.todolist.model.Task;
+import com.example.todolist.task.Task;
 import com.example.todolist.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
