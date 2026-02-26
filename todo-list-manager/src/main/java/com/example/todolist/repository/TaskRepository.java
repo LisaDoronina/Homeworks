@@ -1,6 +1,6 @@
 package com.example.todolist.repository;
 
-import com.example.todolist.task.Task;
+import com.example.todolist.model.Task;
 import java.util.List;
 import java.util.Optional;
 
