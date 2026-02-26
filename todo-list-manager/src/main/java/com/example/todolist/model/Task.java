@@ -1,4 +1,4 @@
-package com.example.todolist.task;
+package com.example.todolist.model;
 
 import java.util.Objects;
 
