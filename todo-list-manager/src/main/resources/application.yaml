@@ -1,20 +1,25 @@
 spring:
   application:
     name: todo-list-manager
-
-server:
-  port: 8080
+  profiles:
+    active: dev
 
 app:
   name: To-Do List Manager
   version: 1.0.0
   description: MVP приложение для управления задачами
   developer: Student Name
+  environment: ${APP_ENV:default}
 
 logging:
   level:
-    com.example.todolist: DEBUG
+    com.example.todolist: INFO
     org.springframework.web: INFO
-    org.springframework.aop: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,beans
