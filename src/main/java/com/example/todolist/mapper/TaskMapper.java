@@ -1,0 +1,18 @@
+package com.example.todolist.mapper;
+
+import com.example.todolist.dto.TaskCreateDto;
+import com.example.todolist.dto.TaskUpdateDto;
+import com.example.todolist.dto.TaskResponseDto;
+import com.example.todolist.model.Task;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+
+@Mapper(componentModel = "spring")
+public interface TaskMapper {
+
+  Task toEntity(TaskCreateDto dto);
+
+  Task updateEntity(TaskUpdateDto dto, @MappingTarget Task task);
+
+  TaskResponseDto toResponseDto(Task task);
+}

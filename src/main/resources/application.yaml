@@ -3,6 +3,10 @@ spring:
     name: todo-list-manager
   profiles:
     active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 app:
   name: To-Do List Manager
@@ -23,3 +27,6 @@ management:
     web:
       exposure:
         include: health,info,beans
+
+api:
+  version: "2.0.0"
