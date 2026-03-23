@@ -1,0 +1,19 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+server:
+  port: 8080
+
+app:
+  name: To-Do List Manager
+  version: 1.0.0
+  environment: production
+
+logging:
+  level:
+    com.example.todolist: WARN
+    org.springframework.web: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
