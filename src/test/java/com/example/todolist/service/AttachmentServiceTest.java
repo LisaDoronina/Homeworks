@@ -8,6 +8,7 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,6 +16,7 @@ class AttachmentServiceTest {
 
   @Test
   void shouldStoreFile() throws IOException {
+
     TaskAttachmentRepository repo = Mockito.mock(TaskAttachmentRepository.class);
     AttachmentService service = new AttachmentService(repo);
 
@@ -30,6 +32,7 @@ class AttachmentServiceTest {
 
     TaskAttachment result = service.storeAttachment(1L, file);
 
+    assertNotNull(result, "Result should not be null");
     assertEquals("test.txt", result.getFileName());
     assertEquals(1L, result.getTaskId());
   }
@@ -41,14 +44,29 @@ class AttachmentServiceTest {
 
     TaskAttachment attachment = new TaskAttachment(
             1L, 1L, "file.txt", "uuid.txt",
-            "text/plain", 10, LocalDateTime.now()
+            "text/plain", 10L, LocalDateTime.now()
     );
 
-    Mockito.when(repo.findById(1L)).thenReturn(java.util.Optional.of(attachment));
-    Mockito.when(repo.delete(1L)).thenReturn(true);
+    Mockito.when(repo.findById(1L)).thenReturn(Optional.of(attachment));
+
+    Mockito.doAnswer(invocation -> {
+      return null;
+    }).when(repo).delete(attachment.getId());
 
     boolean result = service.deleteAttachment(1L);
 
-    assertTrue(result);
+    assertTrue(result, "Attachment should be deleted successfully");
+  }
+
+  @Test
+  void shouldReturnFalseWhenAttachmentNotFound() throws IOException {
+    TaskAttachmentRepository repo = Mockito.mock(TaskAttachmentRepository.class);
+    AttachmentService service = new AttachmentService(repo);
+
+    Mockito.when(repo.findById(1L)).thenReturn(Optional.empty());
+
+    boolean result = service.deleteAttachment(1L);
+
+    assertFalse(result, "Should return false when attachment not found");
   }
 }

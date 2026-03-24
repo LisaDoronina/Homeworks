@@ -2,6 +2,7 @@ package com.example.todolist.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import lombok.Data;
@@ -21,6 +22,16 @@ public class Task {
   private LocalDate dueDate;
   private Priority priority;
   private Set<String> tags;
+
+  public Task(Long id, String title, String description, boolean completed) {
+    this.id = id;
+    this.title = title;
+    this.description = description;
+    this.completed = completed;
+    this.createdAt = LocalDateTime.now();
+    this.priority = Priority.MEDIUM;
+    this.tags = new HashSet<>();
+  }
 
   @Override
   public boolean equals(Object o) {
