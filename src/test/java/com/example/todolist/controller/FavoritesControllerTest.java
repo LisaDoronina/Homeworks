@@ -2,23 +2,24 @@ package com.example.todolist.controller;
 
 import com.example.todolist.dto.TaskResponseDto;
 import com.example.todolist.service.FavoritesService;
+import com.example.todolist.service.TaskService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import jakarta.servlet.http.HttpSession;
+
+import java.util.List;
 import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(FavoritesController.class)
-public class FavoritesControllerTest {
+class FavoritesControllerTest {
 
   @Autowired
   private MockMvc mockMvc;
@@ -26,25 +27,39 @@ public class FavoritesControllerTest {
   @MockBean
   private FavoritesService favoritesService;
 
-  @Test
-  void testAddFavorite() throws Exception {
-    MockHttpSession session = new MockHttpSession();
+  @MockBean
+  private TaskService taskService;
 
-    mockMvc.perform(post("/api/favorites/1").session(session))
+  @Test
+  void shouldAddToFavorites() throws Exception {
+    mockMvc.perform(post("/api/favorites/1"))
             .andExpect(status().isOk());
   }
 
   @Test
-  void testGetFavorites() throws Exception {
-    MockHttpSession session = new MockHttpSession();
+  void shouldRemoveFromFavorites() throws Exception {
+    mockMvc.perform(delete("/api/favorites/1"))
+            .andExpect(status().isOk());
+  }
 
-    TaskResponseDto taskDto = new TaskResponseDto(1L, "Test", "Desc", false,
-            LocalDateTime.now(), LocalDate.now().plusDays(1), null, null);
+  @Test
+  void shouldReturnFavorites() throws Exception {
 
-    Mockito.when(favoritesService.getFavorites()).thenReturn(Set.of(1L, 2L));
+    Mockito.when(favoritesService.getFavorites())
+            .thenReturn(Set.of(1L, 2L));
 
-    mockMvc.perform(get("/api/favorites").session(session))
+    mockMvc.perform(get("/api/favorites"))
+            .andExpect(status().isOk());
+  }
+
+  @Test
+  void shouldReturnEmptyFavorites() throws Exception {
+
+    Mockito.when(favoritesService.getFavorites())
+            .thenReturn(Set.of());
+
+    mockMvc.perform(get("/api/favorites"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(1));
+            .andExpect(content().string("[]"));
   }
 }

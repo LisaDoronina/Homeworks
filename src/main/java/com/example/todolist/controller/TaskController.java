@@ -3,6 +3,7 @@ package com.example.todolist.controller;
 import com.example.todolist.dto.TaskCreateDto;
 import com.example.todolist.dto.TaskUpdateDto;
 import com.example.todolist.dto.TaskResponseDto;
+import com.example.todolist.exception.TaskNotFoundException;
 import com.example.todolist.mapper.TaskMapper;
 import com.example.todolist.model.Task;
 import com.example.todolist.service.*;
@@ -126,8 +127,8 @@ public abstract class TaskController {
           @PathVariable Long id,
           @Validated(OnUpdate.class) @RequestBody TaskUpdateDto taskUpdateDto) {
 
-    Task existingTask = taskService.getTaskById(id).orElse(null);
-    if (existingTask == null) return ResponseEntity.notFound().build();
+    Task existingTask = taskService.getTaskById(id)
+            .orElseThrow(() -> new TaskNotFoundException(id));
 
     if (taskUpdateDto.getDueDate() != null &&
             taskUpdateDto.getDueDate().isBefore(existingTask.getCreatedAt().toLocalDate())) {
