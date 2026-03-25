@@ -10,9 +10,9 @@ public interface TaskRepository {
 
   Optional<Task> findById(Long id);
 
-  Task save(Task task);
+  boolean deleteById(Long id);
 
-  void deleteById(Long id);
+  Task create(Task task);
 
-  boolean existsById(Long id);
+  Task update(Task task);
 }

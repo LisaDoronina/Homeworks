@@ -1,48 +1,64 @@
 package com.example.todolist.repository;
 
+import com.example.todolist.exception.NotFoundTaskException;
 import com.example.todolist.model.Task;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Repository;
 
-@Repository
 @Primary
+@Repository
 public class InMemoryTaskRepository implements TaskRepository {
 
-  private final Map<Long, Task> tasks = new ConcurrentHashMap<>();
-  private final AtomicLong idGenerator = new AtomicLong(1);
+  private final Map<Long, Task> storage = new ConcurrentHashMap<>();
+  private final AtomicLong idSequence = new AtomicLong(0);
 
-  @Override
-  public List<Task> findAll() {
-    return new ArrayList<>(tasks.values());
+  InMemoryTaskRepository() {
   }
 
   @Override
-  public Optional<Task> findById(Long id) {
-    return Optional.ofNullable(tasks.get(id));
-  }
-
-  @Override
-  public Task save(Task task) {
-    if (task.getId() == null) {
-      task.setId(idGenerator.getAndIncrement());
+  public Task create(Task task) {
+    if (task == null) {
+      throw new IllegalArgumentException("Task must not be null");
     }
-    tasks.put(task.getId(), task);
+    Long id = idSequence.incrementAndGet();
+    task.setId(id);
+    storage.put(id, task);
     return task;
   }
 
   @Override
-  public void deleteById(Long id) {
-    tasks.remove(id);
+  public Optional<Task> findById(Long id) {
+    if (id == null) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(storage.get(id));
   }
 
   @Override
-  public boolean existsById(Long id) {
-    return tasks.containsKey(id);
+  public List<Task> findAll() {
+    return new ArrayList<>(storage.values());
+  }
+
+  @Override
+  public Task update(Task task) {
+    if (task == null || task.getId() == null || !storage.containsKey(task.getId())) {
+      throw new NotFoundTaskException(task == null ? null : task.getId());
+    }
+    storage.put(task.getId(), task);
+    return task;
+  }
+
+  @Override
+  public boolean deleteById(Long id) {
+    if (id == null) {
+      return false;
+    }
+    return storage.remove(id) != null;
   }
 }
