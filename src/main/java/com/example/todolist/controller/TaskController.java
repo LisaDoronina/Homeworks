@@ -1,117 +1,264 @@
 package com.example.todolist.controller;
 
-import com.example.todolist.model.Task;
-import com.example.todolist.service.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Lookup;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import com.example.todolist.dto.error.ErrorResponse;
+import com.example.todolist.dto.task.TaskCreateDto;
+import com.example.todolist.dto.task.TaskResponseDto;
+import com.example.todolist.dto.task.TaskUpdateDto;
+import com.example.todolist.service.TaskService;
+import com.example.todolist.validation.OnCreate;
+import com.example.todolist.validation.OnUpdate;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Min;
 import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/tasks")
-public abstract class TaskController {
+@Validated
+@Tag(name = "Tasks", description = "Operations for creating, reading, updating, and deleting tasks")
+public class TaskController {
 
   private final TaskService taskService;
-  private final TaskStatisticsService statisticsService;
-  private final AppInfoService appInfoService;
-  private final RequestScopedBean requestScopedBean;  // Прокси для request-scoped бина
 
-  @Autowired
-  public TaskController(
-          TaskService taskService,
-          TaskStatisticsService statisticsService,
-          AppInfoService appInfoService,
-          RequestScopedBean requestScopedBean) {
+  public TaskController(TaskService taskService) {
     this.taskService = taskService;
-    this.statisticsService = statisticsService;
-    this.appInfoService = appInfoService;
-    this.requestScopedBean = requestScopedBean;
   }
 
+  @Operation(
+          summary = "Get tasks list",
+          description = "Returns all tasks. The response includes the X-Total-Count header "
+                  + "with the total number of returned tasks."
+  )
+  @ApiResponses({
+          @ApiResponse(
+                  responseCode = "200",
+                  description = "Tasks returned successfully",
+                  headers = @Header(
+                          name = "X-Total-Count",
+                          description = "Number of tasks in the response",
+                          schema = @Schema(type = "integer", example = "3")
+                  ),
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          array = @ArraySchema(schema = @Schema(implementation = TaskResponseDto.class))
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "500",
+                  description = "Unexpected server error",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          )
+  })
   @GetMapping
-  public List<Task> getAllTasks() {
-    System.out.println("RequestScopedBean для этого запроса: " +
-            requestScopedBean.getRequestInfo());
-    return taskService.getAllTasks();
+  public ResponseEntity<List<TaskResponseDto>> getAllTasks() {
+    List<TaskResponseDto> tasks = taskService.getAllTasks();
+    return ResponseEntity.ok().header("X-Total-Count", String.valueOf(tasks.size()))
+            .body(tasks);
   }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
-    return taskService.getTaskById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
-  }
-
+  @Operation(
+          summary = "Create task",
+          description = "Creates a new task and returns its persisted representation."
+  )
+  @ApiResponses({
+          @ApiResponse(
+                  responseCode = "201",
+                  description = "Task created successfully",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = TaskResponseDto.class)
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "400",
+                  description = "Request validation failed",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "500",
+                  description = "Unexpected server error",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          )
+  })
   @PostMapping
-  public ResponseEntity<Task> createTask(@RequestBody Task task) {
-    PrototypeScopedBean prototypeBean = getPrototypeScopedBean();
-    String generatedId = prototypeBean.generateTaskId();
-    System.out.println("Использован prototype бин: " + prototypeBean.getBeanInfo());
-    System.out.println("Сгенерирован ID для задачи: " + generatedId);
-
-    Task createdTask = taskService.createTask(task);
-    return new ResponseEntity<>(createdTask, HttpStatus.CREATED);
+  @io.swagger.v3.oas.annotations.parameters.RequestBody(
+          required = true,
+          description = "Task payload used to create a new task"
+  )
+  public ResponseEntity<TaskResponseDto> createTask(
+          @RequestBody @Validated(OnCreate.class) TaskCreateDto request) {
+    TaskResponseDto created = taskService.createTask(request);
+    return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .header("Location", "/api/tasks/" + created.id())
+            .body(created);
   }
 
-  @PutMapping("/{id}")
-  public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task task) {
-    return taskService.updateTask(id, task)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+  @Operation(
+          summary = "Get task by id",
+          description = "Returns a single task by its identifier."
+  )
+  @ApiResponses({
+          @ApiResponse(
+                  responseCode = "200",
+                  description = "Task returned successfully",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = TaskResponseDto.class)
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "400",
+                  description = "Task id is invalid",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "404",
+                  description = "Task not found",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "500",
+                  description = "Unexpected server error",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          )
+  })
+  @GetMapping("/{id}")
+  public ResponseEntity<TaskResponseDto> getTask(
+          @Parameter(description = "Task identifier", required = true, example = "1")
+          @PathVariable @Min(1) Long id) {
+    return ResponseEntity.ok(taskService.getTaskById(id));
   }
+
+  @Operation(
+          summary = "Update task",
+          description = "Partially updates an existing task. Fields omitted in the request keep "
+                  + "their current values."
+  )
+  @ApiResponses({
+          @ApiResponse(
+                  responseCode = "200",
+                  description = "Task updated successfully",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = TaskResponseDto.class)
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "400",
+                  description = "Task id or request body is invalid",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "404",
+                  description = "Task not found",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "500",
+                  description = "Unexpected server error",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          )
+  })
+  @PatchMapping("/{id}")
+  @io.swagger.v3.oas.annotations.parameters.RequestBody(
+          required = true,
+          description = "Fields to update for the task"
+  )
+  public ResponseEntity<TaskResponseDto> updateTask(
+          @Parameter(description = "Task identifier", required = true, example = "1")
+          @PathVariable @Min(1) Long id,
+          @RequestBody @Validated(OnUpdate.class) TaskUpdateDto update) {
+    return ResponseEntity.ok(taskService.updateTask(id, update));
+  }
+
+  @Operation(
+          summary = "Delete task",
+          description = "Deletes a task by its identifier."
+  )
+  @ApiResponses({
+          @ApiResponse(
+                  responseCode = "204",
+                  description = "Task deleted successfully",
+                  content = @Content
+          ),
+          @ApiResponse(
+                  responseCode = "400",
+                  description = "Task id is invalid",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "404",
+                  description = "Task not found",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          ),
+          @ApiResponse(
+                  responseCode = "500",
+                  description = "Unexpected server error",
+                  content = @Content(
+                          mediaType = MediaType.APPLICATION_JSON_VALUE,
+                          schema = @Schema(implementation = ErrorResponse.class)
+                  )
+          )
+  })
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
-    if (taskService.deleteTask(id)) {
-      return ResponseEntity.noContent().build();
-    }
-    return ResponseEntity.notFound().build();
+  public ResponseEntity<Void> deleteTask(
+          @Parameter(description = "Task identifier", required = true, example = "1")
+          @PathVariable @Min(1) Long id) {
+    taskService.deleteTaskById(id);
+    return ResponseEntity.noContent().build();
   }
-
-  @GetMapping("/stats/repositories")
-  public String getRepositoryStats() {
-    return statisticsService.getRepositoryInfo();
-  }
-
-  @GetMapping("/cache/size")
-  public String getCacheSize() {
-    return String.format("Размер кэша задач: %d", taskService.getCacheSize());
-  }
-
-  @GetMapping("/info/app")
-  public String getAppInfo() {
-    return appInfoService.getAppInfo();
-  }
-
-  @GetMapping("/info/request")
-  public String getRequestInfo() {
-    return String.format(
-            "<h3>Информация о текущем запросе</h3>" +
-                    "<p>%s</p>" +
-                    "<p><small>RequestScopedBean создается для каждого HTTP запроса</small></p>",
-            requestScopedBean.getRequestInfo()
-    );
-  }
-
-  @GetMapping("/info/prototype")
-  public String getPrototypeInfo() {
-    PrototypeScopedBean bean1 = getPrototypeScopedBean();
-    PrototypeScopedBean bean2 = getPrototypeScopedBean();
-
-    return String.format(
-            "<h3>Демонстрация Prototype Scope</h3>" +
-                    "<p><strong>Бин 1:</strong> %s</p>" +
-                    "<p><strong>Бин 2:</strong> %s</p>" +
-                    "<p><strong>Равны ли бины?</strong> %s</p>" +
-                    "<p><small>Каждый вызов getPrototypeScopedBean() создает новый экземпляр</small></p>",
-            bean1.getBeanInfo(),
-            bean2.getBeanInfo(),
-            (bean1 == bean2) ? "НЕТ (это разные объекты)" : "ДА (одинаковые)"
-    );
-  }
-
-  @Lookup
-  protected abstract PrototypeScopedBean getPrototypeScopedBean();
 }

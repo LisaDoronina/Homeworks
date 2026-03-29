@@ -7,13 +7,15 @@ server:
   port: 8080
 
 app:
-  name: To-Do List Manager
-  version: 1.0.0
-  environment: production
+  name: todo list manager
+  version: 2.0.0
+  api-version: 2.0.0
+  attachments:
+    upload-dir: uploads
+
 
 logging:
   level:
-    com.example.todolist: WARN
+    root: INFO
+    com.example.todolist: INFO
     org.springframework.web: WARN
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"

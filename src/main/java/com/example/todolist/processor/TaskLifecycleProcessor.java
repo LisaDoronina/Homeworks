@@ -6,29 +6,36 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 
 @Component
 public class TaskLifecycleProcessor implements BeanPostProcessor {
 
-  private static final Logger logger = LoggerFactory.getLogger(TaskLifecycleProcessor.class);
+  private static final Logger log = LoggerFactory.getLogger(TaskLifecycleProcessor.class);
 
   @Override
-  public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-    if (bean instanceof TaskService || bean instanceof TaskRepository) {
-      logger.info("BEFORE INIT - Бин {} типа {} проходит инициализацию",
-              beanName, bean.getClass().getSimpleName());
+  public Object postProcessBeforeInitialization(@NonNull Object bean, @NonNull String beanName)
+          throws BeansException {
+    if (isInteresting(bean)) {
+      log.info("[Bean lifecycle processor] BEFORE initialization: beanName='{}', type={}",
+              beanName, bean.getClass().getName());
     }
     return bean;
   }
 
   @Override
-  public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-    if (bean instanceof TaskService || bean instanceof TaskRepository) {
-      logger.info("AFTER INIT - Бин {} типа {} успешно инициализирован",
-              beanName, bean.getClass().getSimpleName());
+  public Object postProcessAfterInitialization(@NonNull Object bean, @NonNull String beanName)
+          throws BeansException {
+    if (isInteresting(bean)) {
+      log.info("[Bean lifecycle processor] AFTER initialization: beanName='{}', type={}",
+              beanName, bean.getClass().getName());
     }
     return bean;
+  }
+
+  private boolean isInteresting(Object bean) {
+    return (bean instanceof TaskService) || (bean instanceof TaskRepository);
   }
 }

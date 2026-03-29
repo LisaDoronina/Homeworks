@@ -1,76 +1,44 @@
 package com.example.todolist.model;
 
-import java.util.Objects;
+import com.example.todolist.validation.DueDateNotBeforeCreation;
+import java.time.LocalDateTime;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@DueDateNotBeforeCreation
 public class Task {
+
   private Long id;
+
   private String title;
+
   private String description;
+
   private boolean completed;
 
-  public Task() {
-  }
+  private LocalDateTime createdAt;
 
-  public Task(Long id, String title, String description, boolean completed) {
+  private LocalDateTime dueDate;
+
+  private Priority priority;
+
+  private Set<String> tags;
+
+  public Task(Long id, String title, String description, Boolean completed) {
     this.id = id;
     this.title = title;
     this.description = description;
     this.completed = completed;
   }
 
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public String getTitle() {
-    return title;
-  }
-
-  public void setTitle(String title) {
-    this.title = title;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public boolean isCompleted() {
-    return completed;
-  }
-
-  public void setCompleted(boolean completed) {
-    this.completed = completed;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Task task = (Task) o;
-    return completed == task.completed &&
-            Objects.equals(id, task.id) &&
-            Objects.equals(title, task.title) &&
-            Objects.equals(description, task.description);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, title, description, completed);
-  }
-
-  @Override
-  public String toString() {
-    return "Task {" + "id = " + id +
-            ", title = " + title +
-            ", description = " + description +
-            ", completed = " + completed + "}";
+  protected void onCreate() {
+    createdAt = LocalDateTime.now();
   }
 }
