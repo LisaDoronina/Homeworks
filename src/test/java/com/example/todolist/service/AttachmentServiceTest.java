@@ -35,7 +35,7 @@ class AttachmentServiceTest {
   private AttachmentMapper attachmentMapper;
 
   @InjectMocks
-  private AttachmentService attachmentService;  // Прямо сервис, без Impl
+  private AttachmentService attachmentService;
 
   private Task task;
   private TaskAttachment attachment;
@@ -78,12 +78,12 @@ class AttachmentServiceTest {
   @Test
   void deleteAttachment_ShouldReturnTrue() throws Exception {
     when(attachmentRepository.findById(1L)).thenReturn(Optional.of(attachment));
-    doNothing().when(attachmentRepository).delete(attachment.getId());
+    doNothing().when(attachmentRepository).delete(attachment);
 
     boolean result = attachmentService.deleteAttachment(1L);
 
     assertThat(result).isTrue();
-    verify(attachmentRepository).delete(attachment.getId());
+    verify(attachmentRepository).delete(attachment);
   }
 
   @Test

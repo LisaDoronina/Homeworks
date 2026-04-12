@@ -1,40 +1,31 @@
 package com.example.todolist.repository;
 
+import com.example.todolist.model.Task;
 import com.example.todolist.model.TaskAttachment;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.List;
 
 @Repository
-public class TaskAttachmentRepository {
+public interface TaskAttachmentRepository extends JpaRepository<TaskAttachment, Long> {
 
-  private final Map<Long, TaskAttachment> storage = new HashMap<>();
-  private final AtomicLong counter = new AtomicLong(1);
+  List<TaskAttachment> findByTask(Task task);
 
-  public TaskAttachment save(TaskAttachment attachment) {
-    if (attachment.getId() == null) {
-      attachment.setId(counter.getAndIncrement());
-    }
-    storage.put(attachment.getId(), attachment);
-    return attachment;
-  }
+  List<TaskAttachment> findByTaskId(Long taskId);
 
-  public Optional<TaskAttachment> findById(Long id) {
-    return Optional.ofNullable(storage.get(id));
-  }
+  List<TaskAttachment> findByContentTypeContaining(String contentType);
 
-  public List<TaskAttachment> findByTaskId(Long taskId) {
-    List<TaskAttachment> result = new ArrayList<>();
-    for (TaskAttachment a : storage.values()) {
-      if (a.getId().equals(taskId)) {
-        result.add(a);
-      }
-    }
-    return result;
-  }
+  long countByTaskId(Long taskId);
 
-  public boolean delete(Long id) {
-    return storage.remove(id) != null;
-  }
+  @Modifying
+  @Transactional
+  @Query("DELETE FROM TaskAttachment ta WHERE ta.task.id = :taskId")
+  void deleteByTaskId(@Param("taskId") Long taskId);
+
+  List<TaskAttachment> findBySizeGreaterThan(Long size);
 }
