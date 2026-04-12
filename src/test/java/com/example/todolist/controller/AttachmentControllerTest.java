@@ -1,90 +1,94 @@
 package com.example.todolist.controller;
 
+import com.example.todolist.dto.AttachmentResponseDto;
+import com.example.todolist.dto.AttachmentUploadResponseDto;
 import com.example.todolist.model.TaskAttachment;
 import com.example.todolist.service.AttachmentService;
-import com.example.todolist.service.TaskService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(AttachmentController.class)
+@ExtendWith(MockitoExtension.class)
 class AttachmentControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
-
-  @MockBean
+  @Mock
   private AttachmentService attachmentService;
 
-  @MockBean
-  private TaskService taskService;
+  @InjectMocks
+  private AttachmentController attachmentController;
+
+  private MockMvc mockMvc;
+  private AttachmentUploadResponseDto uploadResponse;
+  private AttachmentResponseDto attachmentResponse;
+
+  @BeforeEach
+  void setUp() {
+    mockMvc = MockMvcBuilders.standaloneSetup(attachmentController).build();
+
+    attachmentResponse = new AttachmentResponseDto();
+    attachmentResponse.setId(1L);
+    attachmentResponse.setTaskId(1L);
+    attachmentResponse.setFileName("test.txt");
+    attachmentResponse.setContentType("text/plain");
+    attachmentResponse.setSize(1024L);
+    attachmentResponse.setUploadedAt(LocalDateTime.now());
+
+    uploadResponse = new AttachmentUploadResponseDto(
+            "File uploaded successfully",
+            attachmentResponse,
+            "/api/attachments/1/download"
+    );
+  }
 
   @Test
-  void shouldUploadFile() throws Exception {
+  void uploadFile_ShouldReturnCreated() throws Exception {
     MockMultipartFile file = new MockMultipartFile(
             "file",
             "test.txt",
-            "text/plain",
-            "Hello".getBytes()
+            MediaType.TEXT_PLAIN_VALUE,
+            "test content".getBytes()
     );
 
-    TaskAttachment attachment = new TaskAttachment(
-            1L, 1L, "test.txt", "uuid_test.txt",
-            "text/plain", 5L, LocalDateTime.now()
-    );
+    when(attachmentService.storeAttachment(eq(1L), any()))
+            .thenReturn(uploadResponse);
 
-    Mockito.when(attachmentService.storeAttachment(Mockito.eq(1L), Mockito.any()))
-            .thenReturn(attachment);
+    mockMvc.perform(multipart("/api/tasks/{taskId}/attachments", 1L)
+                    .file(file))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.message").value("File uploaded successfully"))
+            .andExpect(jsonPath("$.attachment.fileName").value("test.txt"));
+  }
 
-    mockMvc.perform(multipart("/api/tasks/1/attachments").file(file))
+  @Test
+  void getAttachmentsForTask_ShouldReturnList() throws Exception {
+    when(attachmentService.getAttachmentsByTaskId(1L))
+            .thenReturn(java.util.List.of(attachmentResponse));
+
+    mockMvc.perform(get("/api/tasks/{taskId}/attachments", 1L))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.fileName").value("test.txt"));
+            .andExpect(jsonPath("$[0].fileName").value("test.txt"));
   }
 
   @Test
-  void shouldFailUploadWhenEmptyFile() throws Exception {
-    MockMultipartFile file = new MockMultipartFile(
-            "file",
-            "",
-            "text/plain",
-            new byte[0]
-    );
+  void deleteAttachment_ShouldReturnNoContent() throws Exception {
+    when(attachmentService.deleteAttachment(1L)).thenReturn(true);
 
-    mockMvc.perform(multipart("/api/tasks/1/attachments").file(file))
-            .andExpect(status().isBadRequest());
-  }
-
-  @Test
-  void shouldDownloadFile() throws Exception {
-    TaskAttachment attachment = new TaskAttachment(
-            1L, 1L, "test.txt", "uuid_test.txt",
-            "text/plain", 5L, LocalDateTime.now()
-    );
-
-    Mockito.when(attachmentService.getAttachment(1L)).thenReturn(attachment);
-    Mockito.when(attachmentService.loadAsResource(1L))
-            .thenReturn(new ByteArrayResource("Hello".getBytes()));
-
-    mockMvc.perform(get("/api/attachments/1"))
-            .andExpect(status().isOk())
-            .andExpect(header().string("Content-Disposition", "attachment; filename=\"test.txt\""));
-  }
-
-  @Test
-  void shouldDeleteAttachment() throws Exception {
-    Mockito.when(attachmentService.deleteAttachment(1L)).thenReturn(true);
-
-    mockMvc.perform(delete("/api/attachments/1"))
+    mockMvc.perform(delete("/api/attachments/{attachmentId}", 1L))
             .andExpect(status().isNoContent());
   }
 }

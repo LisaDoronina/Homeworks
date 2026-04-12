@@ -27,7 +27,7 @@ public class TaskAttachmentRepository {
   public List<TaskAttachment> findByTaskId(Long taskId) {
     List<TaskAttachment> result = new ArrayList<>();
     for (TaskAttachment a : storage.values()) {
-      if (a.getTaskId().equals(taskId)) {
+      if (a.getId().equals(taskId)) {
         result.add(a);
       }
     }

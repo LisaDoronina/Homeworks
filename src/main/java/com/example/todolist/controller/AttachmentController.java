@@ -1,56 +1,70 @@
 package com.example.todolist.controller;
 
 import com.example.todolist.dto.AttachmentResponseDto;
+import com.example.todolist.dto.AttachmentUploadResponseDto;
+import com.example.todolist.mapper.AttachmentMapper;
 import com.example.todolist.model.TaskAttachment;
 import com.example.todolist.service.AttachmentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
+@Tag(name = "Attachments", description = "API для работы с вложениями задач")
 public class AttachmentController {
 
   private final AttachmentService attachmentService;
-
-  public AttachmentController(AttachmentService attachmentService) {
-    this.attachmentService = attachmentService;
-  }
+  private final AttachmentMapper attachmentMapper;
 
   @PostMapping("/tasks/{taskId}/attachments")
-  public AttachmentResponseDto uploadFile(
+  @Operation(summary = "Загрузить файл для задачи")
+  public ResponseEntity<AttachmentUploadResponseDto> uploadFile(
+          @Parameter(description = "ID задачи", example = "1")
           @PathVariable Long taskId,
+          @Parameter(description = "Файл для загрузки")
           @RequestParam("file") MultipartFile file) throws IOException {
 
-    TaskAttachment attachment = attachmentService.storeAttachment(taskId, file);
-    return new AttachmentResponseDto(
-            attachment.getId(),
-            attachment.getFileName(),
-            attachment.getSize(),
-            attachment.getUploadedAt()
-    );
+    AttachmentUploadResponseDto response = attachmentService.storeAttachment(taskId, file);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   @GetMapping("/attachments/{attachmentId}")
-  public ResponseEntity<Resource> downloadFile(@PathVariable Long attachmentId) throws IOException {
+  @Operation(summary = "Скачать файл по ID вложения")
+  public ResponseEntity<Resource> downloadFile(
+          @Parameter(description = "ID вложения", example = "1")
+          @PathVariable Long attachmentId) throws MalformedURLException {
+
     TaskAttachment attachment = attachmentService.getAttachment(attachmentId);
     Resource resource = attachmentService.loadAsResource(attachmentId);
 
     return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType(attachment.getContentType()))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFileName() + "\"")
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                    "attachment; filename=\"" + attachment.getFileName() + "\"")
+            .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(attachment.getSize()))
             .body(resource);
   }
 
   @DeleteMapping("/attachments/{attachmentId}")
-  public ResponseEntity<Void> deleteAttachment(@PathVariable Long attachmentId) throws IOException {
+  @Operation(summary = "Удалить вложение")
+  public ResponseEntity<Void> deleteAttachment(
+          @Parameter(description = "ID вложения", example = "1")
+          @PathVariable Long attachmentId) throws IOException {
+
     if (attachmentService.deleteAttachment(attachmentId)) {
       return ResponseEntity.noContent().build();
     }
@@ -58,10 +72,12 @@ public class AttachmentController {
   }
 
   @GetMapping("/tasks/{taskId}/attachments")
-  public List<AttachmentResponseDto> getAttachmentsForTask(@PathVariable Long taskId) {
-    return attachmentService.repository.findByTaskId(taskId)
-            .stream()
-            .map(a -> new AttachmentResponseDto(a.getId(), a.getFileName(), a.getSize(), a.getUploadedAt()))
-            .collect(Collectors.toList());
+  @Operation(summary = "Получить все вложения задачи")
+  public ResponseEntity<List<AttachmentResponseDto>> getAttachmentsForTask(
+          @Parameter(description = "ID задачи", example = "1")
+          @PathVariable Long taskId) {
+
+    List<AttachmentResponseDto> attachments = attachmentService.getAttachmentsByTaskId(taskId);
+    return ResponseEntity.ok(attachments);
   }
 }

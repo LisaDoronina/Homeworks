@@ -12,11 +12,11 @@ public class StubTaskRepository implements TaskRepository {
   private final Map<Long, Task> tasks = new ConcurrentHashMap<>();
 
   public StubTaskRepository() {
-    Task task1 = new Task(1L, "Купить продукты", "Молоко, хлеб, яйца, овощи", false);
-    Task task2 = new Task(2L, "Сделать домашнее задание", "Spring Framework: To-Do List Manager MVP", false);
-    Task task3 = new Task(3L, "Позвонить родителям", "Узнать как дела, поздравить с праздником", true);
-    Task task4 = new Task(4L, "Сходить в спортзал", "Тренировка спины и ног", false);
-    Task task5 = new Task(5L, "Почитать книгу", "Clean Code - Роберт Мартин", true);
+    Task task1 = new Task("Купить продукты", "Молоко, хлеб, яйца, овощи");
+    Task task2 = new Task("Сделать домашнее задание", "Spring Framework: To-Do List Manager MVP");
+    Task task3 = new Task("Позвонить родителям", "Узнать как дела, поздравить с праздником");
+    Task task4 = new Task("Сходить в спортзал", "Тренировка спины и ног");
+    Task task5 = new Task("Почитать книгу", "Clean Code - Роберт Мартин");
 
     tasks.put(1L, task1);
     tasks.put(2L, task2);

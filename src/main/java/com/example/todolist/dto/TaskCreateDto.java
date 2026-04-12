@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
@@ -30,7 +31,7 @@ public class TaskCreateDto {
 
   @FutureOrPresent(groups = OnCreate.class)
   @Schema(description = "Срок выполнения задачи", example = "2027-03-23", required = true)
-  private LocalDate dueDate;
+  private LocalDateTime dueDate;
 
   @NotNull(groups = OnCreate.class)
   @Schema(description = "Приоритет задачи", example = "HIGH", required = true)
@@ -39,4 +40,15 @@ public class TaskCreateDto {
   @Size(max = 5, groups = OnCreate.class)
   @Schema(description = "Набор тегов для задачи", example = "[\"Music\", \"Radiohead\"]")
   private Set<String> tags;
+
+
+  public TaskCreateDto(String title, String description, LocalDateTime dueDate, Priority priority, String tags) {
+    this.title = title;
+    this.description = description;
+    this.dueDate = dueDate;
+    this.priority = priority != null ? priority : Priority.MEDIUM;
+    if (tags != null && !tags.isEmpty()) {
+      this.tags = Set.of(tags.split(","));
+    }
+  }
 }

@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -57,14 +58,14 @@ public class TaskControllerTest {
 
   @BeforeEach
   void setup() {
-    task = new Task(1L, "Test task", "Description", false, LocalDateTime.now(),
-            LocalDate.now().plusDays(1), Priority.MEDIUM, Set.of("tag1"));
+    task = new Task("Test task", "Description", false,
+            LocalDateTime.now().plusDays(1), Priority.MEDIUM, "tag1");
     taskResponseDto = new TaskResponseDto(1L, "Test task", "Description", false,
             task.getCreatedAt(), task.getDueDate(), task.getPriority(), task.getTags());
-    taskCreateDto = new TaskCreateDto("Test task", "Description", LocalDate.now().plusDays(1),
-            Priority.MEDIUM, Set.of("tag1"));
+    taskCreateDto = new TaskCreateDto("Test task", "Description", LocalDateTime.now().plusDays(1),
+            Priority.MEDIUM, "tag1");
     taskUpdateDto = new TaskUpdateDto("Updated task", "Updated desc", true,
-            LocalDate.now().plusDays(2), Priority.HIGH, Set.of("tag2"));
+            LocalDateTime.now().plusDays(2), Priority.HIGH, "tag2");
   }
 
   @Test

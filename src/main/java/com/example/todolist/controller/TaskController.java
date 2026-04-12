@@ -131,7 +131,7 @@ public abstract class TaskController {
             .orElseThrow(() -> new TaskNotFoundException(id));
 
     if (taskUpdateDto.getDueDate() != null &&
-            taskUpdateDto.getDueDate().isBefore(existingTask.getCreatedAt().toLocalDate())) {
+            taskUpdateDto.getDueDate().isBefore(existingTask.getCreatedAt())) {
       throw new IllegalArgumentException("dueDate не может быть раньше createdAt");
     }
 

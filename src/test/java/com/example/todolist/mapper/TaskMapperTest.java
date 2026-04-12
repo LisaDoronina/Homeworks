@@ -23,7 +23,7 @@ class TaskMapperTest {
     TaskCreateDto dto = new TaskCreateDto(
             "Test task",
             "Description",
-            LocalDate.now(),
+            LocalDateTime.now(),
             Priority.HIGH,
             new HashSet<>()
     );
@@ -45,7 +45,7 @@ class TaskMapperTest {
     task.setId(1L);
     task.setTitle("Test");
     task.setDescription("Desc");
-    task.setDueDate(LocalDate.now());
+    task.setDueDate(LocalDateTime.now());
     task.setPriority(Priority.MEDIUM);
     task.setCompleted(true);
     task.setCreatedAt(LocalDateTime.now());
