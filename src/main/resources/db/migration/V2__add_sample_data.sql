@@ -1,4 +1,3 @@
--- Insert sample data only if table is empty (for development)
 DO $$
     BEGIN
         IF (SELECT COUNT(*) FROM tasks) = 0 THEN
@@ -33,17 +32,14 @@ DO $$
         END IF;
     END $$;
 
--- Insert attachments for existing tasks
 DO $$
     DECLARE
         task_refactor_id BIGINT;
         task_optimize_id BIGINT;
     BEGIN
-        -- Get task IDs dynamically
         SELECT id INTO task_refactor_id FROM tasks WHERE title = 'Рефакторинг легаси кода' LIMIT 1;
         SELECT id INTO task_optimize_id FROM tasks WHERE title = 'Оптимизация запросов к БД' LIMIT 1;
 
-        -- Insert attachments only if they don't exist and tasks exist
         IF task_refactor_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM task_attachments WHERE task_id = task_refactor_id) THEN
             INSERT INTO task_attachments (task_id, file_name, stored_file_name, content_type, size, uploaded_at) VALUES
                 (task_refactor_id,

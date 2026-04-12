@@ -35,7 +35,7 @@ logging:
 
 app:
   name: todo list manager
-  description: Task management system - Production mode  # Добавьте
+  description: Task management system - Production mode
   developer: Lisa Doronina
   version: 2.0.0
   api-version: 2.0.0
