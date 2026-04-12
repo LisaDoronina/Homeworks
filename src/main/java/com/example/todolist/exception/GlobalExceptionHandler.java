@@ -24,7 +24,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  @Value("${api.version}")
+  @Value("${api.version:2.0.0}")
   private String apiVersion;
 
   private ResponseEntity<Object> buildResponse(HttpStatus status, String error, String message, WebRequest request, Map<String, Object> details) {
