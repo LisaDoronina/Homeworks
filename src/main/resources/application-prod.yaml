@@ -3,17 +3,43 @@ spring:
     activate:
       on-profile: prod
 
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/todolist_prod}
+    username: ${DB_USERNAME:prod_user}
+    password: ${DB_PASSWORD:prod_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc.batch_size: 30
+
+  flyway:
+    enabled: true
+    clean-disabled: true
+
 server:
   port: 8080
 
-app:
-  name: To-Do List Manager
-  version: 1.0.0
-  environment: production
-
 logging:
   level:
-    com.example.todolist: WARN
+    root: INFO
+    com.example.todolist: INFO
     org.springframework.web: WARN
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+app:
+  name: todo list manager
+  description: Task management system - Production mode
+  developer: Lisa Doronina
+  version: 2.0.0
+  api-version: 2.0.0
+  api:
+    version: 2.0.0
+  attachments:
+    upload-dir: uploads

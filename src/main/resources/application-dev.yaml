@@ -3,18 +3,45 @@ spring:
     activate:
       on-profile: dev
 
-server:
-  port: 8081
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/todolist_dev}
+    username: ${SPRING_DATASOURCE_USERNAME:dev_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:dev_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
 
-app:
-  name: To-Do List Manager (DEV)
-  version: 1.0.0-DEV
-  environment: development
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+server:
+  port: 8080
 
 logging:
   level:
     com.example.todolist: DEBUG
     org.springframework.web: DEBUG
     org.springframework.aop: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+app:
+  name: todo list manager
+  description: Task management system - Development mode
+  developer: Lisa Doronina
+  version: 2.0.0
+  api-version: 2.0.0
+  api:
+    version: 2.0.0
+  attachments:
+    upload-dir: uploads
