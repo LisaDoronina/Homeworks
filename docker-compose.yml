@@ -5,15 +5,17 @@ services:
     image: postgres:15-alpine
     container_name: todolist-postgres
     environment:
-      POSTGRES_DB: todolist_dev
-      POSTGRES_USER: dev_user
-      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: ${POSTGRES_DB:-todolist_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-dev_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - todolist-network
+    env_file:
+      - .env
 
   pgadmin:
     image: dpage/pgadmin4:latest

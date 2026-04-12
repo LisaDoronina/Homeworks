@@ -1,5 +1,6 @@
 package com.example.todolist.service;
 
+import com.example.todolist.exception.TaskNotFoundException;
 import com.example.todolist.mapper.AttachmentMapper;
 import com.example.todolist.model.Task;
 import com.example.todolist.model.TaskAttachment;
@@ -11,14 +12,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -34,15 +38,23 @@ class AttachmentServiceTest {
   @Mock
   private AttachmentMapper attachmentMapper;
 
+  @Mock
+  private MultipartFile multipartFile;
+
   @InjectMocks
   private AttachmentService attachmentService;
 
   private Task task;
   private TaskAttachment attachment;
-  private MultipartFile multipartFile;
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws IOException {
+    Path uploadPath = Paths.get("target/test-uploads");
+    ReflectionTestUtils.setField(attachmentService, "uploadDirPath", "target/test-uploads");
+    ReflectionTestUtils.setField(attachmentService, "uploadDir", uploadPath);
+
+    attachmentService.init();
+
     task = new Task();
     task.setId(1L);
     task.setTitle("Test Task");
@@ -55,13 +67,6 @@ class AttachmentServiceTest {
     attachment.setContentType("text/plain");
     attachment.setSize(1024L);
     attachment.setUploadedAt(LocalDateTime.now());
-
-    multipartFile = new MockMultipartFile(
-            "file",
-            "test.txt",
-            "text/plain",
-            "test content".getBytes()
-    );
   }
 
   @Test
@@ -73,6 +78,15 @@ class AttachmentServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.getId()).isEqualTo(1L);
     assertThat(result.getFileName()).isEqualTo("test.txt");
+  }
+
+  @Test
+  void getAttachment_WhenNotFound_ShouldThrowException() {
+    when(attachmentRepository.findById(999L)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> attachmentService.getAttachment(999L))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Attachment not found");
   }
 
   @Test
@@ -88,17 +102,11 @@ class AttachmentServiceTest {
 
   @Test
   void deleteAttachment_WhenNotFound_ShouldReturnFalse() throws Exception {
-    when(attachmentRepository.findById(1L)).thenReturn(Optional.empty());
+    when(attachmentRepository.findById(999L)).thenReturn(Optional.empty());
 
-    boolean result = attachmentService.deleteAttachment(1L);
+    boolean result = attachmentService.deleteAttachment(999L);
 
     assertThat(result).isFalse();
     verify(attachmentRepository, never()).delete(any());
-  }
-
-  @Test
-  void getRepository_ShouldReturnRepository() {
-    TaskAttachmentRepository repository = attachmentService.getRepository();
-    assertThat(repository).isEqualTo(attachmentRepository);
   }
 }

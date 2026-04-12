@@ -266,4 +266,8 @@ public class TaskService {
   public int getCacheSize() {
     return taskCache.size();
   }
+
+  public void evictCache() {
+    taskCache.clear();
+  }
 }
