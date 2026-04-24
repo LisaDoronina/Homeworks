@@ -23,6 +23,8 @@ logging:
   level:
     com.example.todolist: DEBUG
     org.springframework.web: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] [%X{traceId:-no-trace}] %-5level %logger{36} - %msg%n"
 
 app:
   name: todo list manager
@@ -34,7 +36,46 @@ app:
     version: 2.0.0
   attachments:
     upload-dir: uploads
+  security:
+    pepper: "hw4GatewayPepper@2024"
+    jwt:
+      secret: "hw4JwtSecretKeyForHomework2024MustBe32BytesLong!!"
+      expiration-ms: 3600000
+  external-api:
+    base-url: "http://localhost:8080/external/v1"
+    connect-timeout-ms: 3000
+    read-timeout-ms: 5000
 
 spring.flyway:
   enabled: true
   locations: classpath:db/migration
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      externalApi:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        ignoreExceptions:
+          - com.example.todolist.exception.TaskNotFoundException
+  ratelimiter:
+    instances:
+      externalApi:
+        limit-for-period: 5
+        limit-refresh-period: 1s
+        timeout-duration: 0s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  endpoint:
+    health:
+      show-details: always
+

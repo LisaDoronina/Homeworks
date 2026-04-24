@@ -1,6 +1,7 @@
 package com.example.todolist.exception;
 
 import com.example.todolist.dto.ErrorResponse;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -79,6 +80,18 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(TaskNotFoundException.class)
   public ResponseEntity<Object> handleTaskNotFound(TaskNotFoundException ex, WebRequest request) {
     return buildResponse(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request, null);
+  }
+
+  @ExceptionHandler(ExternalApiException.class)
+  public ResponseEntity<Object> handleExternalApi(ExternalApiException ex, WebRequest request) {
+    HttpStatus status = ex.getStatusCode() >= 500 ? HttpStatus.BAD_GATEWAY : HttpStatus.BAD_REQUEST;
+    return buildResponse(status, "External API Error", ex.getMessage(), request, null);
+  }
+
+  @ExceptionHandler(RequestNotPermitted.class)
+  public ResponseEntity<Object> handleRateLimit(RequestNotPermitted ex, WebRequest request) {
+    return buildResponse(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests",
+            "Rate limit exceeded, try again later", request, null);
   }
 
   @ExceptionHandler(Exception.class)
