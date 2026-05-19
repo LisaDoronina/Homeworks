@@ -2,13 +2,14 @@ name: CI workflow
 
 on:
   push:
-    branches: [ "main", "hometask_3" ]
+    branches: [ "main", "hometask_3", "hometask_5" ]
   pull_request:
     branches: [ "main" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # ubuntu-latest has Docker daemon running natively — Testcontainers works without DinD
 
     services:
       postgres:
@@ -42,7 +43,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Run tests with PostgreSQL
+      - name: Run tests (unit, slice, Testcontainers integration)
         run: mvn clean test
         env:
           SPRING_PROFILES_ACTIVE: test
@@ -54,3 +55,4 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/db
           SPRING_DATASOURCE_USERNAME: user
           SPRING_DATASOURCE_PASSWORD: password
+          TESTCONTAINERS_RYUK_DISABLED: false
