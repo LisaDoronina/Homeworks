@@ -37,6 +37,9 @@ class TaskRepositoryIntegrationTest {
         registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.PostgreSQLDialect");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
         registry.add("spring.flyway.enabled", () -> "false");
+        // Маленький пул — быстрое закрытие при shutdown, без HikariCP warnings
+        registry.add("spring.datasource.hikari.maximum-pool-size", () -> "2");
+        registry.add("spring.datasource.hikari.validation-timeout", () -> "1000");
     }
 
     @Autowired
