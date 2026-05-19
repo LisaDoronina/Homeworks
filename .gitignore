@@ -1,0 +1,25 @@
+# Build output
+target/
+build/
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# Environment and secrets
+.env
+local.properties
+
+# Application upload directory
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+task-service-stats.txt
